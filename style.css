@@ -155,4 +155,204 @@ h2 {
   border-radius: 15px;
   background: linear-gradient(180deg, #13243a, #0d1b2c);
   border: 1px solid var(--borde);
-  box-shadow
+  box-shadow: var(--sombra);
+  text-align: center;
+}
+
+.tarjeta span {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.tarjeta strong {
+  display: block;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.tarjeta.digito strong {
+  color: var(--amarillo);
+  font-size: 25px;
+}
+
+.tarjeta.datos strong {
+  color: var(--azul);
+}
+
+.titulo-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+#estadoAnalisis {
+  color: var(--texto-suave);
+  font-size: 12px;
+  text-align: right;
+}
+
+.indicadores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.indicador {
+  padding: 13px;
+  border-radius: 13px;
+  background: rgba(6, 16, 28, 0.55);
+  border: 1px solid var(--borde);
+}
+
+.indicador span {
+  display: block;
+  color: var(--texto-suave);
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+
+.indicador strong {
+  font-size: 16px;
+}
+
+.digitos {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.digitos div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  border-radius: 11px;
+  background: rgba(6, 16, 28, 0.55);
+  border: 1px solid var(--borde);
+}
+
+.digitos strong {
+  font-size: 18px;
+  color: var(--amarillo);
+}
+
+.digitos span {
+  margin-top: 5px;
+  color: var(--texto-suave);
+  font-size: 11px;
+}
+
+.resultado {
+  text-align: center;
+}
+
+.resultado h2 {
+  margin-bottom: 14px;
+}
+
+.senal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.senal.esperar {
+  background: rgba(245, 185, 66, 0.14);
+  color: #ffd36f;
+  border: 1px solid rgba(245, 185, 66, 0.32);
+}
+
+.senal.compra {
+  background: rgba(24, 199, 132, 0.14);
+  color: #5fe3ad;
+  border: 1px solid rgba(24, 199, 132, 0.34);
+}
+
+.senal.venta {
+  background: rgba(255, 91, 110, 0.14);
+  color: #ff96a3;
+  border: 1px solid rgba(255, 91, 110, 0.34);
+}
+
+#confianza {
+  margin: 15px 0 8px;
+  font-weight: bold;
+}
+
+#explicacion {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.historial h2 {
+  margin-bottom: 14px;
+}
+
+.lista-digitos {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  scrollbar-width: thin;
+}
+
+.lista-digitos span {
+  flex: 0 0 auto;
+  min-width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #0a1726;
+  border: 1px solid var(--borde);
+  color: var(--texto);
+  font-weight: bold;
+}
+
+footer {
+  margin-top: 20px;
+  text-align: center;
+  color: #7f91a6;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 390px) {
+  h1 {
+    font-size: 23px;
+  }
+
+  .resumen {
+    grid-template-columns: 1fr;
+  }
+
+  .tarjeta {
+    text-align: left;
+  }
+
+  .tarjeta span,
+  .tarjeta strong {
+    display: inline;
+  }
+
+  .tarjeta strong {
+    float: right;
+  }
+
+  .digitos {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
