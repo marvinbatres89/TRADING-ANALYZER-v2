@@ -90,9 +90,10 @@ function conectarMercado() {
   };
 
   socket.onmessage = function (evento) {
-    procesarMensaje(evento);
-  };
-
+  console.log(evento.data);
+  procesarMensaje(evento);
+};
+  
   socket.onerror = function () {
     mostrarError("Ocurrió un error de conexión.");
   };
