@@ -24,7 +24,8 @@ socket.onopen = function () {
 
 socket.onmessage = function (event) {
   const datos = JSON.parse(event.data);
-
+                  Console. Long(datos);
+  
   if (datos.error) {
     tendencia.textContent = "Error: " + datos.error.message;
     return;
