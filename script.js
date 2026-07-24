@@ -16,7 +16,7 @@ socket.onopen = function () {
 
   socket.send(
     JSON.stringify({
-      ticks: "1HZ100V",
+      ticks: "R_100",
       subscribe: 1
     })
   );
