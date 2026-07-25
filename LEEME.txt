@@ -1,0 +1,23 @@
+TRADING ANALYZER PRO — VERSIÓN 1.1
+
+Esta versión usa únicamente tres archivos:
+
+1. index.html
+2. style.css
+3. app.js
+
+INSTRUCCIONES PARA GITHUB DESDE CHROME EN ANDROID
+
+1. Abre el repositorio TRADING-ANALYZER-v2.
+2. Pulsa Add file.
+3. Pulsa Upload files.
+4. Selecciona index.html, style.css y app.js.
+5. Pulsa Commit changes.
+6. Espera de 1 a 2 minutos.
+7. Abre GitHub Pages.
+8. Pulsa primero “Probar botón”.
+9. Pulsa después “Conectar con Deriv”.
+10. Si falla, pulsa “Copiar” en Diagnóstico técnico y comparte el resultado.
+
+No subas el archivo ZIP directamente al repositorio.
+Primero debes extraerlo.
