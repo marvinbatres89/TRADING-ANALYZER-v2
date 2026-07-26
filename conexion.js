@@ -13,9 +13,9 @@
 
 class ConexionDeriv {
   constructor(opciones = {}) {
-    this.url =
-      opciones.url ||
-      "wss://ws.binaryws.com/websockets/v3";
+      this.url =
+  opciones.url ||
+  "wss://ws.derivws.com/websockets/v3?app_id=1089";
 
     this.socket = null;
 
