@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Prueba de conexión Deriv</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: #ffffff;
+      background: #101722;
+    }
+
+    .contenedor {
+      width: 100%;
+      max-width: 480px;
+      margin: 20px auto;
+      padding: 22px;
+      border: 1px solid #2c3a4d;
+      border-radius: 18px;
+      background: #182231;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 25px;
+      text-align: center;
+    }
+
+    .estado {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: bold;
+      background: #263447;
+    }
+
+    .precio {
+      margin: 20px 0;
+      padding: 22px;
+      border-radius: 12px;
+      text-align: center;
+      background: #0f1722;
+    }
+
+    .precio small {
+      display: block;
+      margin-bottom: 8px;
+      color: #aeb9c7;
+    }
+
+    #precio {
+      font-size: 34px;
+      font-weight: bold;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #conectarBtn {
+      color: #ffffff;
+      background: #1769e0;
+    }
+
+    #desconectarBtn {
+      color: #ffffff;
+      background: #a52f3a;
+    }
+
+    .registro {
+      height: 230px;
+      margin-top: 20px;
+      padding: 12px;
+      overflow-y: auto;
+      border-radius: 10px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 13px;
+      color: #c9d5e4;
+      background: #0b111a;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="contenedor">
+    <h1>Prueba de conexión Deriv</h1>
+
+    <div id="estado" class="estado">
+      Esperando conexión...
+    </div>
+
+    <div class="precio">
+      <small>Volatility 100 (1s)</small>
+      <span id="precio">--</span>
+    </div>
+
+    <button id="conectarBtn">
+      Conectar con Deriv
+    </button>
+
+    <button id="desconectarBtn">
+      Desconectar
+    </button>
+
+    <div id="registro" class="registro">
+      Diagnóstico:
+    </div>
+  </main>
+
+  <script>
+    const estado = document.getElementById("estado");
+    const precio = document.getElementById("precio");
+    const registro = document.getElementById("registro");
+    const conectarBtn = document.getElementById("conectarBtn");
+    const desconectarBtn = document.getElementById("desconectarBtn");
+
+    let socket = null;
+
+    function agregarRegistro(mensaje) {
+      const hora = new Date().toLocaleTimeString();
+
+      registro.textContent +=
+        "\n[" + hora + "] " + mensaje;
+
+      registro.scrollTop = registro.scrollHeight;
+    }
+
+    function conectar() {
+      if (
+        socket &&
+        (
+          socket.readyState === WebSocket.OPEN ||
+          socket.readyState === WebSocket.CONNECTING
+        )
+      ) {
+        agregarRegistro("Ya existe una conexión activa.");
+        return;
+      }
+
+      estado.textContent = "Conectando...";
+      precio.textContent = "--";
+
+      agregarRegistro("Intentando conectar con Deriv...");
+
+      socket = new WebSocket(
+        "wss://ws.derivws.com/websockets/v3?app_id=1089"
+      );
+
+      socket.onopen = function () {
+        estado.textContent = "Conectado";
+        agregarRegistro("Conexión WebSocket establecida.");
+
+        const solicitud = {
+          ticks: ticks: "R_100",,
+          subscribe: 1
+        };
+
+        socket.send(JSON.stringify(solicitud));
+
+        agregarRegistro(
+          "Suscripción enviada para 1HZ100V."
+        );
+      };
+
+      socket.onmessage = function (evento) {
+        let datos;
+
+        try {
+          datos = JSON.parse(evento.data);
+        } catch (error) {
+          agregarRegistro(
+            "No se pudo interpretar la respuesta."
+          );
+          return;
+        }
+
+        if (datos.error) {
+          estado.textContent = "Error de Deriv";
+
+          agregarRegistro(
+            "Error: " + datos.error.message
+          );
+
+          return;
+        }
+
+        if (datos.tick) {
+          precio.textContent = datos.tick.quote;
+
+          estado.textContent =
+            "Conectado y recibiendo precios";
+
+          agregarRegistro(
+            "Precio recibido: " + datos.tick.quote
+          );
+        } else {
+          agregarRegistro(
+            "Respuesta recibida: " + datos.msg_type
+          );
+        }
+      };
+
+      socket.onerror = function () {
+        estado.textContent = "Error de conexión";
+
+        agregarRegistro(
+          "El navegador informó un error WebSocket."
+        );
+      };
+
+      socket.onclose = function (evento) {
+        estado.textContent = "Desconectado";
+
+        agregarRegistro(
+          "Conexión cerrada. Código: " +
+          evento.code
+        );
+      };
+    }
+
+    function desconectar() {
+      if (!socket) {
+        agregarRegistro(
+          "No existe una conexión para cerrar."
+        );
+        return;
+      }
+
+      socket.close(1000, "Cierre manual");
+      socket = null;
+
+      estado.textContent = "Desconectado";
+      precio.textContent = "--";
+    }
+
+    conectarBtn.addEventListener("click", conectar);
+    desconectarBtn.addEventListener("click", desconectar);
+
+    agregarRegistro("Página de prueba cargada.");
+  </script>
+</body>
+</html>
