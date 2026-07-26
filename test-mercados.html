@@ -72,9 +72,108 @@ Solicitar Mercados
 
 Esperando...
 
-</div>  
+</div>
+
+<script type="module">
+
+import { conexionDeriv } from "./conexion.js";
+import { mercadosDeriv } from "./mercados.js";
+
+const salida =
+document.getElementById("salida");
+
+const btnConectar =
+document.getElementById("btnConectar");
+
+const btnMercados =
+document.getElementById("btnMercados");
+
+function escribir(texto){
+
+salida.textContent +=
+"\n" + texto;
+
+salida.scrollTop =
+salida.scrollHeight;
+
+}
+
+window.addEventListener(
+"deriv:diagnostico",
+(evento)=>{
+
+const dato = evento.detail;
+
+escribir(
+"[" +
+dato.hora +
+"] " +
+dato.mensaje
+);
+
+});
+
+conexionDeriv.alCambiarEstado((estado)=>{
+
+escribir(
+"Estado: " +
+estado.estado
+);
+
+});
+
+mercadosDeriv.alActualizar((datos)=>{
+
+escribir("");
+
+escribir(
+"===== MERCADOS ENCONTRADOS ====="
+);
+
+datos.volatility.forEach((mercado)=>{
+
+escribir(
+mercado.nombre +
+" -> " +
+mercado.codigo
+);
+
+});
+
+escribir("");
+
+escribir(
+"Total encontrados: " +
+datos.volatility.length
+);
+
+});
+
+btnConectar.addEventListener(
+"click",
+()=>{
+
+escribir(
+"Iniciando conexión..."
+);
+
+conexionDeriv.conectar();
+
+});
+
+btnMercados.addEventListener(
+"click",
+()=>{
+
+escribir(
+"Solicitando mercados..."
+);
+
+mercadosDeriv.solicitarMercados();
+
+});
 
  </script>
 
 </body>
-</html> 
+</html>
