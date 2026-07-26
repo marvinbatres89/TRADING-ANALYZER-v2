@@ -8,7 +8,7 @@
     content="width=device-width, initial-scale=1.0"
   >
 
-  <title>Prueba de conexión Deriv</title>
+  <title>Prueba de conexión con Deriv</title>
 
   <style>
     * {
@@ -17,138 +17,133 @@
 
     body {
       margin: 0;
-      padding: 20px;
       min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
       font-family: Arial, sans-serif;
-      color: #ffffff;
-      background: #101722;
+      background: #101820;
+      color: white;
     }
 
     .contenedor {
       width: 100%;
-      max-width: 480px;
-      margin: 20px auto;
-      padding: 22px;
-      border: 1px solid #2c3a4d;
+      max-width: 430px;
+      padding: 25px;
+      text-align: center;
+      background: #1d2935;
       border-radius: 18px;
-      background: #182231;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
     }
 
     h1 {
       margin-top: 0;
       font-size: 25px;
-      text-align: center;
     }
 
     .estado {
       margin: 20px 0;
-      padding: 15px;
-      border-radius: 12px;
-      text-align: center;
+      padding: 14px;
       font-weight: bold;
-      background: #263447;
+      background: #263747;
+      border-radius: 10px;
     }
 
     .precio {
-      margin: 20px 0;
-      padding: 22px;
-      border-radius: 12px;
-      text-align: center;
-      background: #0f1722;
-    }
-
-    .precio small {
-      display: block;
-      margin-bottom: 8px;
-      color: #aeb9c7;
-    }
-
-    #precio {
-      font-size: 34px;
+      margin: 18px 0;
+      font-size: 38px;
       font-weight: bold;
+      color: #40e0a1;
+    }
+
+    .detalle {
+      margin: 10px 0;
+      color: #c9d4dd;
     }
 
     button {
       width: 100%;
-      margin-top: 10px;
+      margin-top: 18px;
       padding: 14px;
       border: none;
       border-radius: 10px;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: bold;
+      color: white;
+      background: #1683ff;
       cursor: pointer;
     }
 
-    #conectarBtn {
-      color: #ffffff;
-      background: #1769e0;
+    button:active {
+      transform: scale(0.98);
     }
 
-    #desconectarBtn {
-      color: #ffffff;
-      background: #a52f3a;
+    .error {
+      color: #ff7070;
     }
 
-    .registro {
-      height: 230px;
-      margin-top: 20px;
-      padding: 12px;
-      overflow-y: auto;
-      border-radius: 10px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      font-size: 13px;
-      color: #c9d5e4;
-      background: #0b111a;
+    .conectado {
+      color: #40e0a1;
     }
   </style>
 </head>
 
 <body>
+
   <main class="contenedor">
-    <h1>Prueba de conexión Deriv</h1>
+
+    <h1>Prueba de conexión con Deriv</h1>
+
+    <p>
+      Índice:
+      <strong>Volatility 100 (1s)</strong>
+    </p>
 
     <div id="estado" class="estado">
-      Esperando conexión...
+      Preparando conexión...
     </div>
 
-    <div class="precio">
-      <small>Volatility 100 (1s)</small>
-      <span id="precio">--</span>
+    <div id="precio" class="precio">
+      --.--
     </div>
 
-    <button id="conectarBtn">
-      Conectar con Deriv
+    <p class="detalle">
+      Última actualización:
+      <span id="hora">--:--:--</span>
+    </p>
+
+    <p class="detalle">
+      Ticks recibidos:
+      <span id="contador">0</span>
+    </p>
+
+    <button id="reconectar">
+      Reconectar
     </button>
 
-    <button id="desconectarBtn">
-      Desconectar
-    </button>
-
-    <div id="registro" class="registro">
-      Diagnóstico:
-    </div>
   </main>
 
   <script>
     const estado = document.getElementById("estado");
     const precio = document.getElementById("precio");
-    const registro = document.getElementById("registro");
-    const conectarBtn = document.getElementById("conectarBtn");
-    const desconectarBtn = document.getElementById("desconectarBtn");
+    const hora = document.getElementById("hora");
+    const contador = document.getElementById("contador");
+    const botonReconectar = document.getElementById("reconectar");
 
-    let socket = null;
+    let socket;
+    let totalTicks = 0;
 
-    function agregarRegistro(mensaje) {
-      const hora = new Date().toLocaleTimeString();
+    function mostrarEstado(mensaje, clase = "") {
+      estado.textContent = mensaje;
+      estado.className = "estado";
 
-      registro.textContent +=
-        "\n[" + hora + "] " + mensaje;
-
-      registro.scrollTop = registro.scrollHeight;
+      if (clase) {
+        estado.classList.add(clase);
+      }
     }
 
-    function conectar() {
+    function conectarDeriv() {
       if (
         socket &&
         (
@@ -156,110 +151,84 @@
           socket.readyState === WebSocket.CONNECTING
         )
       ) {
-        agregarRegistro("Ya existe una conexión activa.");
-        return;
+        socket.close();
       }
 
-      estado.textContent = "Conectando...";
-      precio.textContent = "--";
+      totalTicks = 0;
+      contador.textContent = "0";
+      precio.textContent = "--.--";
 
-      agregarRegistro("Intentando conectar con Deriv...");
+      mostrarEstado("Conectando con Deriv...");
 
       socket = new WebSocket(
         "wss://ws.derivws.com/websockets/v3?app_id=1089"
       );
 
       socket.onopen = function () {
-        estado.textContent = "Conectado";
-        agregarRegistro("Conexión WebSocket establecida.");
+        mostrarEstado(
+          "Conectado. Recibiendo precios...",
+          "conectado"
+        );
 
-        const solicitud = {
-          ticks: ticks: "R_100",,
-          subscribe: 1
-        };
-
-        socket.send(JSON.stringify(solicitud));
-
-        agregarRegistro(
-          "Suscripción enviada para 1HZ100V."
+        socket.send(
+          JSON.stringify({
+            ticks: "1HZ100V",
+            subscribe: 1
+          })
         );
       };
 
       socket.onmessage = function (evento) {
-        let datos;
-
-        try {
-          datos = JSON.parse(evento.data);
-        } catch (error) {
-          agregarRegistro(
-            "No se pudo interpretar la respuesta."
-          );
-          return;
-        }
+        const datos = JSON.parse(evento.data);
 
         if (datos.error) {
-          estado.textContent = "Error de Deriv";
-
-          agregarRegistro(
-            "Error: " + datos.error.message
+          mostrarEstado(
+            "Error: " + datos.error.message,
+            "error"
           );
 
+          console.error(datos.error);
           return;
         }
 
         if (datos.tick) {
-          precio.textContent = datos.tick.quote;
+          totalTicks++;
 
-          estado.textContent =
-            "Conectado y recibiendo precios";
+          precio.textContent = Number(
+            datos.tick.quote
+          ).toFixed(2);
 
-          agregarRegistro(
-            "Precio recibido: " + datos.tick.quote
-          );
-        } else {
-          agregarRegistro(
-            "Respuesta recibida: " + datos.msg_type
-          );
+          contador.textContent = totalTicks;
+
+          hora.textContent =
+            new Date().toLocaleTimeString("es-SV");
         }
       };
 
-      socket.onerror = function () {
-        estado.textContent = "Error de conexión";
-
-        agregarRegistro(
-          "El navegador informó un error WebSocket."
+      socket.onerror = function (error) {
+        mostrarEstado(
+          "No se pudo conectar con Deriv.",
+          "error"
         );
+
+        console.error("Error de WebSocket:", error);
       };
 
-      socket.onclose = function (evento) {
-        estado.textContent = "Desconectado";
-
-        agregarRegistro(
-          "Conexión cerrada. Código: " +
-          evento.code
+      socket.onclose = function () {
+        mostrarEstado(
+          "Conexión cerrada. Pulsa Reconectar.",
+          "error"
         );
       };
     }
 
-    function desconectar() {
-      if (!socket) {
-        agregarRegistro(
-          "No existe una conexión para cerrar."
-        );
-        return;
-      }
+    botonReconectar.addEventListener(
+      "click",
+      conectarDeriv
+    );
 
-      socket.close(1000, "Cierre manual");
-      socket = null;
-
-      estado.textContent = "Desconectado";
-      precio.textContent = "--";
-    }
-
-    conectarBtn.addEventListener("click", conectar);
-    desconectarBtn.addEventListener("click", desconectar);
-
-    agregarRegistro("Página de prueba cargada.");
+    conectarDeriv();
   </script>
+
 </body>
 </html>
