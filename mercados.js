@@ -1,7 +1,7 @@
 /*
   Trading Analyzer V2
   Módulo: mercados.js
-  Versión: 2.2.0
+  Versión: 2.3.0
 
   Responsabilidades:
   - Solicitar los mercados activos a Deriv.
@@ -74,16 +74,14 @@ class MercadosDeriv {
   }
 
   procesarMensaje(datos) {
+    if (!datos || typeof datos !== "object") {
+      return;
+    }
 
-  console.log("Respuesta completa de 
-              Deriv:", datos);
-
-  this.registrar(
-    "Respuesta: " + 
-    JSON.stringify(datos)
-  );
-
-  // aquí continúa el resto del código...
+    console.log(
+      "Respuesta completa de Deriv:",
+      datos
+    );
 
     if (
       datos.error &&
@@ -104,6 +102,11 @@ class MercadosDeriv {
     ) {
       return;
     }
+
+    this.registrar(
+      "Respuesta recibida correctamente de Deriv.",
+      "exito"
+    );
 
     this.listaCompleta = datos.active_symbols;
 
@@ -185,9 +188,11 @@ class MercadosDeriv {
   }
 
   buscarPorCodigo(codigo) {
-    return this.volatility.find(
-      (mercado) => mercado.codigo === codigo
-    ) || null;
+    return (
+      this.volatility.find(
+        (mercado) => mercado.codigo === codigo
+      ) || null
+    );
   }
 
   alActualizar(funcion) {
