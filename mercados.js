@@ -1,13 +1,11 @@
 /*
   Trading Analyzer V2
-  Módulo: mercados.js
-  Versión: 2.3.0
+  Archivo: mercados.js
 
-  Responsabilidades:
-  - Solicitar los mercados activos a Deriv.
-  - Guardar la lista recibida.
-  - Encontrar los índices Volatility.
-  - Informar errores y resultados.
+  Funciones:
+  - Solicitar mercados activos a Deriv.
+  - Detectar índices Volatility.
+  - Mostrar diagnósticos.
 */
 
 import { conexionDeriv } from "./conexion.js";
@@ -18,45 +16,44 @@ class MercadosDeriv {
 
     this.listaCompleta = [];
     this.volatility = [];
-
-    this.reqId = 100;
     this.suscriptores = [];
 
+    this.reqId = 100;
+
     this.conexion.alRecibirMensaje(
-      (datos) => this.procesarMensaje(datos)
+      (datos) => {
+        this.procesarMensaje(datos);
+      }
     );
   }
 
   registrar(mensaje, tipo = "info") {
-    const hora = new Date().toLocaleTimeString();
+    const hora =
+      new Date().toLocaleTimeString();
 
     console.log(
-      `[${hora}] [MERCADOS] [${tipo.toUpperCase()}] ${mensaje}`
+      `[${hora}] [MERCADOS] ${mensaje}`
     );
 
     window.dispatchEvent(
-      new CustomEvent("deriv:diagnostico", {
-        detail: {
-          hora,
-          tipo,
-          mensaje: `[Mercados] ${mensaje}`
+      new CustomEvent(
+        "deriv:diagnostico",
+        {
+          detail: {
+            hora: hora,
+            tipo: tipo,
+            mensaje:
+              "[Mercados] " + mensaje
+          }
         }
-      })
-    );
-  }
-
-  obtenerCodigo(mercado) {
-    return (
-      mercado.symbol ||
-      mercado.underlying_symbol ||
-      ""
+      )
     );
   }
 
   solicitarMercados() {
     if (!this.conexion.estaConectado()) {
       this.registrar(
-        "No se pueden solicitar mercados porque Deriv no está conectado.",
+        "Deriv no está conectado.",
         "error"
       );
 
@@ -64,24 +61,32 @@ class MercadosDeriv {
     }
 
     this.registrar(
-      "Solicitando lista de mercados activos..."
+      "Solicitando mercados activos..."
     );
 
-    return this.conexion.enviar({
-      active_symbols: "full",
+    const solicitud = {
+      active_symbols: "brief",
+      product_type: "basic",
       req_id: this.reqId
-    });
+    };
+
+    this.registrar(
+      "Solicitud enviada: " +
+      JSON.stringify(solicitud)
+    );
+
+    return this.conexion.enviar(
+      solicitud
+    );
   }
 
   procesarMensaje(datos) {
-    if (!datos || typeof datos !== "object") {
+    if (
+      !datos ||
+      typeof datos !== "object"
+    ) {
       return;
     }
-
-    console.log(
-      "Respuesta completa de Deriv:",
-      datos
-    );
 
     if (
       datos.error &&
@@ -89,7 +94,8 @@ class MercadosDeriv {
       datos.echo_req.active_symbols
     ) {
       this.registrar(
-        `Deriv rechazó la solicitud: ${datos.error.message}`,
+        "Deriv rechazó la solicitud: " +
+        datos.error.message,
         "error"
       );
 
@@ -97,139 +103,202 @@ class MercadosDeriv {
     }
 
     if (
-      datos.msg_type !== "active_symbols" ||
-      !Array.isArray(datos.active_symbols)
+      datos.msg_type !==
+      "active_symbols"
     ) {
       return;
     }
 
     this.registrar(
-      "Respuesta recibida correctamente de Deriv.",
-      "exito"
+      "Respuesta active_symbols recibida."
     );
 
-    this.listaCompleta = datos.active_symbols;
+    if (
+      !Array.isArray(
+        datos.active_symbols
+      )
+    ) {
+      this.registrar(
+        "La respuesta no contiene una lista válida.",
+        "error"
+      );
+
+      return;
+    }
+
+    this.listaCompleta =
+      datos.active_symbols;
 
     this.registrar(
-      `Mercados recibidos: ${this.listaCompleta.length}`,
-      "exito"
+      "Mercados recibidos: " +
+      this.listaCompleta.length
     );
 
-    this.volatility = this.buscarIndicesVolatility(
-      this.listaCompleta
+    this.volatility =
+      this.buscarIndicesVolatility(
+        this.listaCompleta
+      );
+
+    this.registrar(
+      "Índices Volatility encontrados: " +
+      this.volatility.length
     );
 
-    if (this.volatility.length === 0) {
-      this.registrar(
-        "No se encontraron índices Volatility.",
-        "aviso"
-      );
-    } else {
-      this.registrar(
-        `Índices Volatility encontrados: ${this.volatility.length}`,
-        "exito"
-      );
-
-      this.volatility.forEach((mercado) => {
+    this.volatility.forEach(
+      (mercado) => {
         this.registrar(
-          `${mercado.nombre} = ${mercado.codigo}`
+          mercado.nombre +
+          " = " +
+          mercado.codigo
         );
-      });
-    }
+      }
+    );
 
     this.notificarSuscriptores();
   }
 
   buscarIndicesVolatility(lista) {
-    const resultados = [];
+    return lista
+      .filter(
+        (mercado) => {
+          const codigo =
+            String(
+              mercado.symbol || ""
+            );
 
-    lista.forEach((mercado) => {
-      const codigo = this.obtenerCodigo(mercado);
+          const nombre =
+            String(
+              mercado.display_name ||
+              ""
+            ).toLowerCase();
 
-      const nombre = String(
-        mercado.display_name ||
-        mercado.market_display_name ||
-        ""
+          const submercado =
+            String(
+              mercado.submarket ||
+              ""
+            ).toLowerCase();
+
+          return (
+            nombre.includes(
+              "volatility"
+            ) ||
+            submercado.includes(
+              "random"
+            ) ||
+            /^R_(10|25|50|75|100)$/.test(
+              codigo
+            ) ||
+            /^1HZ(10|25|50|75|100)V$/.test(
+              codigo
+            )
+          );
+        }
+      )
+      .map(
+        (mercado) => {
+          return {
+            codigo:
+              mercado.symbol || "",
+
+            nombre:
+              mercado.display_name ||
+              mercado.symbol ||
+              "Sin nombre",
+
+            mercado:
+              mercado.market || "",
+
+            submercado:
+              mercado.submarket || "",
+
+            datosOriginales:
+              mercado
+          };
+        }
+      )
+      .sort(
+        (a, b) => {
+          return a.nombre.localeCompare(
+            b.nombre
+          );
+        }
       );
-
-      const texto = nombre.toLowerCase();
-
-      const pareceVolatility =
-        texto.includes("volatility") ||
-        /^R_(10|25|50|75|100)$/.test(codigo) ||
-        /^1HZ(10|25|50|75|100)V$/.test(codigo);
-
-      if (!pareceVolatility) {
-        return;
-      }
-
-      resultados.push({
-        codigo,
-        nombre: nombre || codigo,
-        mercado: mercado.market || "",
-        submercado: mercado.submarket || "",
-        exchangeIsOpen:
-          mercado.exchange_is_open ?? null,
-        datosOriginales: mercado
-      });
-    });
-
-    return resultados.sort((a, b) => {
-      return a.nombre.localeCompare(b.nombre);
-    });
   }
 
   obtenerTodos() {
-    return [...this.listaCompleta];
+    return [
+      ...this.listaCompleta
+    ];
   }
 
   obtenerVolatility() {
-    return [...this.volatility];
+    return [
+      ...this.volatility
+    ];
   }
 
   buscarPorCodigo(codigo) {
     return (
       this.volatility.find(
-        (mercado) => mercado.codigo === codigo
+        (mercado) => {
+          return (
+            mercado.codigo === codigo
+          );
+        }
       ) || null
     );
   }
 
   alActualizar(funcion) {
-    if (typeof funcion !== "function") {
+    if (
+      typeof funcion !== "function"
+    ) {
       return;
     }
 
-    this.suscriptores.push(funcion);
+    this.suscriptores.push(
+      funcion
+    );
   }
 
   notificarSuscriptores() {
     const datos = {
-      todos: this.obtenerTodos(),
-      volatility: this.obtenerVolatility()
+      todos:
+        this.obtenerTodos(),
+
+      volatility:
+        this.obtenerVolatility()
     };
 
-    this.suscriptores.forEach((funcion) => {
-      try {
-        funcion(datos);
-      } catch (error) {
-        this.registrar(
-          `Error notificando mercados: ${error.message}`,
-          "error"
-        );
+    this.suscriptores.forEach(
+      (funcion) => {
+        try {
+          funcion(datos);
+        } catch (error) {
+          this.registrar(
+            "Error notificando mercados: " +
+            error.message,
+            "error"
+          );
+        }
       }
-    });
+    );
 
     window.dispatchEvent(
-      new CustomEvent("deriv:mercados", {
-        detail: datos
-      })
+      new CustomEvent(
+        "deriv:mercados",
+        {
+          detail: datos
+        }
+      )
     );
   }
 }
 
 const mercadosDeriv =
-  new MercadosDeriv(conexionDeriv);
+  new MercadosDeriv(
+    conexionDeriv
+  );
 
 export {
   MercadosDeriv,
