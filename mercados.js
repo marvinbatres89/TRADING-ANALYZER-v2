@@ -84,7 +84,6 @@ class MercadosDeriv {
   );
 
   // aquí continúa el resto del código...
-    }
 
     if (
       datos.error &&
