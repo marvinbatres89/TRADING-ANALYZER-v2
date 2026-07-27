@@ -74,8 +74,16 @@ class MercadosDeriv {
   }
 
   procesarMensaje(datos) {
-    if (!datos || typeof datos !== "object") {
-      return;
+
+  console.log("Respuesta completa de 
+              Deriv:", datos);
+
+  this.registrar(
+    "Respuesta: " + 
+    JSON.stringify(datos)
+  );
+
+  // aquí continúa el resto del código...
     }
 
     if (
