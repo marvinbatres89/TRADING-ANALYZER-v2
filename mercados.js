@@ -68,8 +68,7 @@ class MercadosDeriv {
     );
 
     return this.conexion.enviar({
-      active_symbols: "brief",
-      product_type: "basic",
+      active_symbols: "full",
       req_id: this.reqId
     });
   }
