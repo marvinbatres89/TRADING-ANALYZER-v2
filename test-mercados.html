@@ -1,179 +1,243 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
 
-<title>Prueba de Mercados</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
-<style>
+  <title>Prueba de mercados</title>
 
-body{
-background:#111827;
-color:white;
-font-family:Arial,sans-serif;
-padding:20px;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-.card{
-background:#1f2937;
-padding:15px;
-border-radius:12px;
-margin-bottom:15px;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 30px 20px;
+      background: #101827;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+    }
 
-button{
-width:100%;
-padding:15px;
-margin-top:10px;
-border:none;
-border-radius:10px;
-background:#2563eb;
-color:white;
-font-size:16px;
-}
+    .contenedor {
+      width: 100%;
+      max-width: 650px;
+      margin: 0 auto;
+    }
 
-#salida{
-background:#000;
-color:#00ff88;
-padding:10px;
-border-radius:10px;
-height:320px;
-overflow:auto;
-white-space:pre-wrap;
-font-size:13px;
-}
+    h1 {
+      margin: 20px 0 35px;
+      font-size: 38px;
+      text-align: center;
+    }
 
-</style>
+    .controles {
+      padding: 28px;
+      border-radius: 20px;
+      background: #1d2939;
+    }
 
+    button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 22px 15px;
+      border: none;
+      border-radius: 16px;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 25px;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #salida {
+      width: 100%;
+      min-height: 520px;
+      margin-top: 28px;
+      padding: 20px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      border-radius: 18px;
+      background: #000000;
+      color: #22e584;
+      font-family: monospace;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 
 <body>
+  <main class="contenedor">
+    <h1>Trading Analyzer V2</h1>
 
-<h1>Trading Analyzer V2</h1>
+    <section class="controles">
+      <button id="btnConectar" type="button">
+        Conectar
+      </button>
 
-<div class="card">
+      <button id="btnMercados" type="button">
+        Solicitar Mercados
+      </button>
+    </section>
 
-<button id="btnConectar">
+    <pre id="salida">Página cargada correctamente.</pre>
+  </main>
 
-Conectar
+  <script type="module">
+    import {
+      conexionDeriv
+    } from "./conexion.js";
 
-</button>
+    import {
+      mercadosDeriv
+    } from "./mercados.js";
 
-<button id="btnMercados">
+    const salida =
+      document.getElementById("salida");
 
-Solicitar Mercados
+    const btnConectar =
+      document.getElementById("btnConectar");
 
-</button>
+    const btnMercados =
+      document.getElementById("btnMercados");
 
-</div>
+    function escribir(texto) {
+      salida.textContent +=
+        "\n" + String(texto);
 
-<div id="salida">
+      salida.scrollTop =
+        salida.scrollHeight;
+    }
 
-Esperando...
+    escribir("JavaScript iniciado.");
+    escribir("Módulos importados correctamente.");
 
-</div>
+    window.addEventListener(
+      "deriv:diagnostico",
+      function (evento) {
+        const dato = evento.detail || {};
 
-<script type="module">
+        escribir(
+          "[" +
+          (dato.hora || "--") +
+          "] " +
+          (dato.mensaje || "Sin mensaje")
+        );
+      }
+    );
 
-import { conexionDeriv } from "./conexion.js";
-import { mercadosDeriv } from "./mercados.js";
+    conexionDeriv.alCambiarEstado(
+      function (estado) {
+        const valor =
+          estado &&
+          estado.estado
+            ? estado.estado
+            : String(estado);
 
-const salida =
-document.getElementById("salida");
+        escribir(
+          "Estado de conexión: " + valor
+        );
+      }
+    );
 
-const btnConectar =
-document.getElementById("btnConectar");
+    mercadosDeriv.alActualizar(
+      function (datos) {
+        const mercados =
+          datos &&
+          Array.isArray(datos.volatility)
+            ? datos.volatility
+            : [];
 
-const btnMercados =
-document.getElementById("btnMercados");
+        escribir("");
+        escribir(
+          "===== MERCADOS ENCONTRADOS ====="
+        );
 
-function escribir(texto){
+        if (mercados.length === 0) {
+          escribir(
+            "No se encontraron índices Volatility."
+          );
+        }
 
-salida.textContent +=
-"\n" + texto;
+        mercados.forEach(
+          function (mercado) {
+            escribir(
+              mercado.nombre +
+              " → " +
+              mercado.codigo
+            );
+          }
+        );
 
-salida.scrollTop =
-salida.scrollHeight;
+        escribir(
+          "Total encontrados: " +
+          mercados.length
+        );
+      }
+    );
 
-}
+    btnConectar.addEventListener(
+      "click",
+      function () {
+        escribir("");
+        escribir("Iniciando conexión...");
 
-window.addEventListener(
-"deriv:diagnostico",
-(evento)=>{
+        try {
+          conexionDeriv.conectar();
+        } catch (error) {
+          escribir(
+            "Error al conectar: " +
+            error.message
+          );
+        }
+      }
+    );
 
-const dato = evento.detail;
+    btnMercados.addEventListener(
+      "click",
+      function () {
+        escribir("");
+        escribir("Solicitando mercados...");
 
-escribir(
-"[" +
-dato.hora +
-"] " +
-dato.mensaje
-);
+        try {
+          mercadosDeriv.solicitarMercados();
+        } catch (error) {
+          escribir(
+            "Error al solicitar mercados: " +
+            error.message
+          );
+        }
+      }
+    );
 
-});
+    window.addEventListener(
+      "error",
+      function (evento) {
+        escribir(
+          "ERROR DE JAVASCRIPT: " +
+          evento.message
+        );
+      }
+    );
 
-conexionDeriv.alCambiarEstado((estado)=>{
-
-escribir(
-"Estado: " +
-estado.estado
-);
-
-});
-
-mercadosDeriv.alActualizar((datos)=>{
-
-escribir("");
-
-escribir(
-"===== MERCADOS ENCONTRADOS ====="
-);
-
-datos.volatility.forEach((mercado)=>{
-
-escribir(
-mercado.nombre +
-" -> " +
-mercado.codigo
-);
-
-});
-
-escribir("");
-
-escribir(
-"Total encontrados: " +
-datos.volatility.length
-);
-
-});
-
-btnConectar.addEventListener(
-"click",
-()=>{
-
-escribir(
-"Iniciando conexión..."
-);
-
-conexionDeriv.conectar();
-
-});
-
-btnMercados.addEventListener(
-"click",
-()=>{
-
-escribir(
-"Solicitando mercados..."
-);
-
-mercadosDeriv.solicitarMercados();
-
-});
-
- </script>
-
+    window.addEventListener(
+      "unhandledrejection",
+      function (evento) {
+        escribir(
+          "ERROR NO CONTROLADO: " +
+          String(evento.reason)
+        );
+      }
+    );
+  </script>
 </body>
 </html>
